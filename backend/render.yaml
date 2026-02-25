@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: photototext-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: AZURE_OCR_ENDPOINT
+        sync: false
+      - key: AZURE_OCR_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: "*"  # Update with your frontend URL after deployment
