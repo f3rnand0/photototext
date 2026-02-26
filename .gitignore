@@ -29,3 +29,25 @@ service-account*.json
 
 # Environment files (global)
 .envrc
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+coverage/
+.turbo/
+.cache/
+*.log
+.coverage
+*.pyc
+__pycache__/
+.venv/
+venv/
+.env
+!.env.local
+.env.*.local
+*.env

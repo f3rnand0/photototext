@@ -9,6 +9,49 @@ from app.ocr_service import OCRService
 
 settings = get_settings()
 
+
+def combine_texts_conditionally(results: list) -> str:
+    """
+    Combine texts from multiple images with conditional line breaks.
+    
+    Only add paragraph break (\n\n) if previous text ends with sentence-ending
+    punctuation (.!?). Otherwise, join with a space.
+    
+    Args:
+        results: List of result dicts with 'text' key
+        
+    Returns:
+        Combined text string
+    """
+    combined_parts = []
+    sentence_enders = '.!?'
+    
+    for i, result in enumerate(results):
+        text = result["text"].strip()
+        
+        if not text:
+            continue
+            
+        if i == 0:
+            # First image - just add the text
+            combined_parts.append(text)
+        else:
+            # Check if previous text ends with sentence-ending punctuation
+            prev_text = results[i - 1]["text"].strip()
+            
+            if prev_text and prev_text[-1] in sentence_enders:
+                # Previous text ended with punctuation - add paragraph break
+                combined_parts.append(text)
+            else:
+                # Previous text didn't end with punctuation - likely continuation
+                # Join with space instead of paragraph break
+                if combined_parts:
+                    combined_parts[-1] = combined_parts[-1] + " " + text
+                else:
+                    combined_parts.append(text)
+    
+    return "\n\n".join(combined_parts)
+
 app = FastAPI(
     title="PhotoToText API",
     description="Extract text from images using Azure OCR",
@@ -82,8 +125,8 @@ async def extract_text(files: List[UploadFile] = File(...)):
         # Process images with OCR
         results = ocr_service.extract_text_from_multiple_images(images)
         
-        # Create combined text
-        combined_text = "\n\n".join([r["text"] for r in results])
+        # Create combined text with conditional line breaks
+        combined_text = combine_texts_conditionally(results)
         
         # Convert to response model
         ocr_results = [

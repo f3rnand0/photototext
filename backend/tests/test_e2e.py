@@ -5,22 +5,27 @@ from pathlib import Path
 # Get the fixtures directory
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
-# Expected results for each test image
-# Updated with actual extracted text from Azure OCR
-EXPECTED_RESULTS = {
-    "85273A5B-3F64-4DFA-B4B8-8BE6E23D9DD5_4_5005_c.jpeg": {
-        "expected_text": "bewusst , dünn, entschlossen.\n\n„Wer Katzen mag, hat einen guten Geschmack . , meine, Lieblingsspruch . Ich hasse Schlangen, schon beim Gedan- ken wird mir schlecht . Die ekligen Tiere, essen Ratten, Mäuse und vieles ekliges Zeug, wassuihr eher nicht wissen wollt. Würg! Auch wenn Katzen Mäuse jagen, finde ich, nicht alle Katzen jagen , sondern nur manche. Hunde sind auch süß aber zu laut , Katzen im Gegenteil nicht. Mit ihre scharfer Krallen , können sie geschickt - jagen und sich in der Wildnis.",
-        "description": "Third test image - About cats and taste"
-    },
-    "85DAE903-61D7-435B-8CC6-9CC82B1AD87A_4_5005_c.jpeg": {
-        "expected_text": "Torella * Meine Lieblingstiere * siativ- Fast jeder mag Hunde, finde ich.\n\nEtiv- haft Aber ich nicht, denn ich habe ein anderes Geschmack für Tiere.\n\nAnstatt Hunde zu mögen, mag ich am liebsten Katzen. Alle Tiere, die mit Katzen verwandt sind, mag ich. Zum Beispiel Leoparde, Geparde, Pumas Luchse , Löwen , Tiger und vieles mehr. Trotzdem finde ich Hunde halb so schlimm. Katzen sind: süß, weich, klug, humorvoll, schön, hochbegabt , einsam, ernst, selbsti",
-        "description": "First test image - About favorite animals (German)"
-    },
-    "A579D686-84FE-4D76-9EEC-9C02F6446211_4_5005_c.jpeg": {
-        "expected_text": "at verteidigen. Wenn man gles zusammenfassen würde, dann wäre das hier sehr nützlich: Katzen können sich gut schleichen und verteidigen. Sie sind gut beschützt und sehr kluge Tiere. was ich nicht geschrieben habe ist : Katzen und ihre Verwandten, können nach einem Sprung, auf die Vier landen , ohne Sich einziges Körperteil zu fer Verletzen!\n\nENDE nis",
-        "description": "Second test image - About cats defending and landing"
-    }
-}
+# Expected combined text from all test images (in order: image1, image2, image3)
+# This represents the complete text after all processing (syllable joining,
+# punctuation fixing, margin filtering, conditional line breaks)
+# Updated based on actual Azure OCR output from integration test
+EXPECTED_COMBINED_TEXT = """* Meine Lieblingstiere *
+
+Fast jeder mag Hunde, finde ich.
+
+Aber ich nicht, denn ich habe ein anderes Geschmack für Tiere.
+
+Anstatt Hunde zu mögen, mag ich am liebsten Katzen. Alle Tiere, die mit Katzen verwandt sind, mag ich. Zum Beispiel Leoparde, Geparde, Pumas Luchse, Löwen, Tiger und vieles mehr. Trotzdem finde ich Hunde halb so schlimm. Katzen sind: süß, weich, klug, humorvoll, schön, hochbegabt, einsam, ernst, selbsti bewusst, dünn, entschlossen.
+
+„Wer Katzen mag, hat einen guten Geschmack., meine, Lieblingsspruch. Ich hasse Schlangen, schon beim Gedanken wird mir schlecht. Die ekligen Tiere, essen Ratten, Mäuse und vieles ekliges Zeug, wassuihr eher nicht wissen wollt. Würg! Auch wenn Katzen Mäuse jagen, finde ich, nicht alle Katzen jagen, sondern nur manche. Hunde sind auch süß aber zu laut, Katzen im Gegenteil nicht. Mit ihre scharfer Krallen, können sie geschickt jagen und sich in der Wildnis.
+
+at verteidigen. Wenn man gles zusammenfassen würde, dann wäre das hier sehr nützlich:
+
+Katzen können sich gut schleichen und verteidigen. Sie sind gut beschützt und sehr kluge Tiere. was ich nicht geschrieben habe ist:
+
+Katzen und ihre Verwandten, können nach einem Sprung, auf die Vier landen, ohne Sich einziges Körperteil zu verletzen!
+
+ENDE"""
 
 
 def get_fixture_path(filename: str) -> Path:
@@ -63,11 +68,6 @@ class TestOCRExtraction:
         assert data["results"][0]["order"] == 0
         assert "text" in data["results"][0]
         assert "combined_text" in data
-        
-        # Check expected text (placeholder - user will update)
-        # expected = EXPECTED_RESULTS.get(filename, {}).get("expected_text", "")
-        # if expected and not expected.startswith("PLACEHOLDER"):
-        #     assert data["results"][0]["text"] == expected
 
     def test_extract_text_multiple_images(self, client):
         """Test extracting text from multiple images maintaining order."""
@@ -237,6 +237,9 @@ def test_integration_with_azure(client):
     
     This test requires valid Azure credentials to be configured.
     Run manually: pytest tests/test_e2e.py::test_integration_with_azure -v
+    
+    NOTE: If this test fails due to text mismatches, update EXPECTED_COMBINED_TEXT
+    with the actual output shown in the test failure message.
     """
     test_images = get_test_images()
     if not test_images:
@@ -269,9 +272,7 @@ def test_integration_with_azure(client):
         print(result['text'])
     print("\n=== END ===\n")
     
-    # Validate extracted text against expected results
-    for result in data["results"]:
-        expected = EXPECTED_RESULTS.get(result["filename"], {}).get("expected_text", "")
-        if expected:
-            assert result["text"] == expected, \
-                f"Text mismatch for {result['filename']}\nExpected: {expected}\nGot: {result['text']}"
+    # Validate combined text against expected
+    combined = data["combined_text"]
+    assert combined == EXPECTED_COMBINED_TEXT, \
+        f"Combined text mismatch.\nExpected:\n{EXPECTED_COMBINED_TEXT}\n\nGot:\n{combined}"

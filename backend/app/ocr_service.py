@@ -7,7 +7,7 @@ from azure.cognitiveservices.vision.computervision.models import OperationStatus
 from msrest.authentication import CognitiveServicesCredentials
 
 from app.config import get_settings
-from app.text_processor import clean_line_breaks
+from app.text_processor import process_extracted_text
 
 
 class OCRService:
@@ -41,17 +41,19 @@ class OCRService:
                     break
                 time.sleep(1)
             
-            # Extract text from results
+            # Extract text from results with bounding boxes
             if read_result.status == OperationStatusCodes.succeeded:
-                extracted_lines = []
+                lines_with_boxes = []
                 
                 for text_result in read_result.analyze_result.read_results:
                     for line in text_result.lines:
-                        extracted_lines.append(line.text)
+                        lines_with_boxes.append({
+                            'text': line.text,
+                            'bounding_box': line.bounding_box
+                        })
                 
-                # Join with newlines and clean up
-                raw_text = '\n'.join(extracted_lines)
-                cleaned_text = clean_line_breaks(raw_text)
+                # Process text with new pipeline
+                cleaned_text = process_extracted_text(lines_with_boxes)
                 
                 return cleaned_text
             else:
