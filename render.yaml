@@ -18,11 +18,13 @@ services:
         value: "https://photototext.onrender.com"
 
   # Frontend Static Site
-  - type: static
+  - type: web
     name: photototext
+    runtime: static
+    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
-    publishDir: dist
+    staticPublishPath: ./dist
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: "https://photototext-api.onrender.com"
