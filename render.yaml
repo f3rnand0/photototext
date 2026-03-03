@@ -27,7 +27,7 @@ services:
     runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    staticPublishPath: dist
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: "https://photototext-api.onrender.com"
