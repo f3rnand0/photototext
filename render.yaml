@@ -15,7 +15,7 @@ services:
       - key: AZURE_OCR_KEY
         sync: false
       - key: ALLOWED_ORIGINS
-        value: "https://photototext.onrender.com"
+        value: "https://photototext-pbn9.onrender.com"
       - key: DEBUG
         value: "true"  # Set to "false" to disable debug logging in production
       - key: SENTRY_DSN
