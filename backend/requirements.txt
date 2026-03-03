@@ -8,6 +8,7 @@ azure-core==1.29.5
 msrest==0.7.1
 python-dotenv==1.0.0
 pillow==10.1.0
+sentry-sdk[fastapi]==1.40.0
 
 # Testing dependencies
 pytest==7.4.3

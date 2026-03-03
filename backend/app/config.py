@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_EXTENSIONS: set = {"png", "jpg", "jpeg", "gif", "bmp", "tiff", "webp"}
     
+    # Debug and monitoring settings
+    DEBUG: bool = False
+    SENTRY_DSN: str = ""
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

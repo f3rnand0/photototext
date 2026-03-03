@@ -16,6 +16,10 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         value: "https://photototext.onrender.com"
+      - key: DEBUG
+        value: "true"  # Set to "false" to disable debug logging in production
+      - key: SENTRY_DSN
+        value: "https://3d124ee6551f082ba3ec59a7ae444998@o4510981719326720.ingest.de.sentry.io/4510981721096272"
 
   # Frontend Static Site
   - type: web
@@ -27,3 +31,7 @@ services:
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: "https://photototext-api.onrender.com"
+      - key: NEXT_PUBLIC_DEBUG
+        value: "true"  # Set to "false" to disable debug logging in production
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        value: "https://3d124ee6551f082ba3ec59a7ae444998@o4510981719326720.ingest.de.sentry.io/4510981721096272"

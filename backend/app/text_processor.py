@@ -1,9 +1,9 @@
 import re
-import logging
 from typing import List, Dict, Any, Tuple, Optional
+from app.logger import get_logger
 
-# Configure logging
-logger = logging.getLogger(__name__)
+# Get logger
+logger = get_logger("text_processor")
 
 # Margin filtering configuration
 MARGIN_FILTER_CONFIG = {
@@ -19,10 +19,8 @@ MARGIN_FILTER_CONFIG = {
 def log_filter_decision(text: str, reason: str, details: Optional[Dict[str, Any]] = None):
     """Log filtering decisions for debugging."""
     if MARGIN_FILTER_CONFIG['DEBUG_MODE']:
-        msg = f"Margin Filter: '{text}' - {reason}"
-        if details:
-            msg += f" | Details: {details}"
-        logger.info(msg)
+        context = {"text": text, "reason": reason, **(details or {})}
+        logger.debug(f"Margin Filter decision: {reason}", extra={"context": context})
 
 
 def extract_box_data(item: Dict[str, Any]) -> Dict[str, Any]:
@@ -269,7 +267,9 @@ def filter_margin_text_c2(lines_with_boxes: List[Dict[str, Any]]) -> List[str]:
         logger.info(f"Margin Filter: Too few lines ({len(lines_with_boxes)}), skipping filtering")
         return [item['text'] for item in lines_with_boxes]
     
-    logger.info(f"Margin Filter: Processing {len(lines_with_boxes)} text lines")
+    logger.info(f"Margin Filter: Processing {len(lines_with_boxes)} text lines", extra={
+        "context": {"input_line_count": len(lines_with_boxes)}
+    })
     
     # Extract box data
     boxes_data = [extract_box_data(item) for item in lines_with_boxes]
@@ -361,7 +361,12 @@ def filter_margin_text_c2(lines_with_boxes: List[Dict[str, Any]]) -> List[str]:
         # Keep everything else
         filtered.append(text)
     
-    logger.info(f"Margin Filter: Kept {len(filtered)} lines, filtered {filtered_count} lines")
+    logger.info(f"Margin Filter: Complete", extra={"context": {
+        "input_lines": len(lines_with_boxes),
+        "kept_lines": len(filtered),
+        "filtered_lines": filtered_count,
+        "kept_percentage": f"{(len(filtered)/len(lines_with_boxes)*100):.1f}%"
+    }})
     
     return filtered
 
@@ -577,22 +582,69 @@ def process_extracted_text(lines_with_boxes: List[Dict[str, Any]]) -> str:
     Returns:
         Cleaned and processed text
     """
+    import time
+    start_time = time.time()
+    
+    logger.info("Text processing pipeline started", extra={"context": {
+        "input_lines": len(lines_with_boxes),
+        "total_input_chars": sum(len(line.get('text', '')) for line in lines_with_boxes)
+    }})
+    
     # Step 1: Filter out margin text
+    step1_start = time.time()
     filtered_lines = filter_margin_text(lines_with_boxes)
+    step1_duration = time.time() - step1_start
     
     if not filtered_lines:
+        logger.info("Text processing: No content after margin filtering")
         return ""
     
+    logger.debug(f"Step 1 (margin filter) completed in {step1_duration:.3f}s", extra={"context": {
+        "step": "margin_filter",
+        "duration_seconds": f"{step1_duration:.3f}",
+        "lines_after_filter": len(filtered_lines)
+    }})
+    
     # Step 2: Join lines with newlines for processing
+    step2_start = time.time()
     text = '\n'.join(filtered_lines)
+    step2_duration = time.time() - step2_start
     
     # Step 3: Join hyphenated words
+    step3_start = time.time()
     text = join_hyphenated_words(text)
+    step3_duration = time.time() - step3_start
+    
+    logger.debug(f"Step 3 (hyphenation) completed in {step3_duration:.3f}s", extra={"context": {
+        "step": "join_hyphens",
+        "duration_seconds": f"{step3_duration:.3f}",
+        "text_length": len(text)
+    }})
     
     # Step 4: Remove spaces before punctuation
+    step4_start = time.time()
     text = remove_spaces_before_punctuation(text)
+    step4_duration = time.time() - step4_start
     
     # Step 5: Clean line breaks within the text
+    step5_start = time.time()
     text = clean_line_breaks(text)
+    step5_duration = time.time() - step5_start
+    
+    logger.debug(f"Step 5 (line breaks) completed in {step5_duration:.3f}s", extra={"context": {
+        "step": "clean_line_breaks",
+        "duration_seconds": f"{step5_duration:.3f}",
+        "text_length": len(text)
+    }})
+    
+    total_duration = time.time() - start_time
+    
+    logger.info("Text processing pipeline completed", extra={"context": {
+        "input_lines": len(lines_with_boxes),
+        "output_lines": len(filtered_lines),
+        "output_chars": len(text),
+        "total_duration_seconds": f"{total_duration:.3f}",
+        "compression_ratio": f"{(len(text) / max(sum(len(line.get('text', '')) for line in lines_with_boxes), 1) * 100):.1f}%"
+    }})
     
     return text

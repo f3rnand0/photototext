@@ -1,4 +1,7 @@
-export const metadata = {
+import type { Metadata } from 'next';
+import { Providers } from './providers';
+
+export const metadata: Metadata = {
   title: 'PhotoToText',
   description: 'Extract text from photos using Azure OCR',
 }
@@ -11,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body style={{ margin: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

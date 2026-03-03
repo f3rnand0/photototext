@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface UploadAreaProps {
   onFilesSelected: (files: File[]) => void;
@@ -16,18 +17,41 @@ export default function UploadArea({ onFilesSelected, isLoading }: UploadAreaPro
   const [validationError, setValidationError] = useState('');
 
   const validateFile = (file: File): string | null => {
+    logger.debug('Validating file', { 
+      name: file.name, 
+      type: file.type, 
+      size: file.size 
+    });
+    
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return `${file.name}: Invalid file type. Allowed: PNG, JPG, GIF, BMP, TIFF, WEBP`;
+      const error = `${file.name}: Invalid file type. Allowed: PNG, JPG, GIF, BMP, TIFF, WEBP`;
+      logger.warn('File validation failed - invalid type', { 
+        filename: file.name, 
+        fileType: file.type 
+      });
+      return error;
     }
     if (file.size > MAX_FILE_SIZE) {
-      return `${file.name}: File too large (max 10MB)`;
+      const error = `${file.name}: File too large (max 10MB)`;
+      logger.warn('File validation failed - too large', { 
+        filename: file.name, 
+        size: file.size, 
+        maxSize: MAX_FILE_SIZE 
+      });
+      return error;
     }
+    
+    logger.debug('File validation passed', { filename: file.name });
     return null;
   };
 
   const handleFiles = useCallback((files: FileList | null) => {
-    if (!files) return;
+    if (!files) {
+      logger.debug('handleFiles called with null files');
+      return;
+    }
 
+    logger.info('Files selected', { count: files.length });
     setValidationError('');
     const fileArray = Array.from(files);
     
@@ -40,39 +64,55 @@ export default function UploadArea({ onFilesSelected, isLoading }: UploadAreaPro
       }
     }
 
+    logger.info('All files validated successfully', { 
+      count: fileArray.length,
+      files: fileArray.map(f => ({ name: f.name, size: f.size }))
+    });
+    
     setSelectedFiles(fileArray);
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
+    logger.debug('Drag over upload area');
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    logger.debug('Drag left upload area');
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    logger.info('Files dropped', { count: e.dataTransfer.files.length });
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    logger.info('Files selected via input', { count: e.target.files?.length || 0 });
     handleFiles(e.target.files);
   }, [handleFiles]);
 
   const handleSubmit = useCallback(() => {
     if (selectedFiles.length > 0) {
+      logger.info('Extract text button clicked', { 
+        fileCount: selectedFiles.length,
+        files: selectedFiles.map(f => f.name)
+      });
       onFilesSelected(selectedFiles);
+    } else {
+      logger.warn('Extract text clicked but no files selected');
     }
   }, [selectedFiles, onFilesSelected]);
 
   const clearFiles = useCallback(() => {
+    logger.info('Clear button clicked', { clearedCount: selectedFiles.length });
     setSelectedFiles([]);
     setValidationError('');
-  }, []);
+  }, [selectedFiles.length]);
 
   return (
     <div>
