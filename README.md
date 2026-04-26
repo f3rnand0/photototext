@@ -70,7 +70,7 @@ The application intelligently handles line breaks:
 
 ```bash
 cd backend
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
@@ -78,8 +78,8 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your Azure credentials
 
-# Run server
-uvicorn app.main:app --reload
+# Run server (in background)
+uvicorn app.main:app --reload > server.log 2>&1 &
 ```
 
 Backend runs at `http://localhost:8000`
@@ -94,8 +94,8 @@ npm install
 cp .env.example .env.local
 # Edit .env.local if needed
 
-# Run development server
-npm run dev
+# Run development server (in the background)
+nohup npm run dev  > frontend.log 2>&1 &
 ```
 
 Frontend runs at `http://localhost:3000`
