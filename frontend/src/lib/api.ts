@@ -226,10 +226,10 @@ export async function extractTextFromImagesSequential(
       logger.error(`Failed to process ${file.name}`, error instanceof Error ? error : new Error(errorMsg));
     }
     
-    // 5-second delay before next image (except after last)
+    // Brief pause before next image (except after last)
     if (i < files.length - 1) {
-      logger.info(`Waiting 5 seconds before next image...`);
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      logger.info(`Pausing briefly before next image...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
   

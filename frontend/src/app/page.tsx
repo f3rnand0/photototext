@@ -101,7 +101,8 @@ export default function Home() {
 
   const ProgressBar = ({ current, total, currentFile }: { current: number; total: number; currentFile: string }) => {
     const percentage = Math.round((current / total) * 100);
-    const estimatedSeconds = total * 10; // Rough estimate: 10 seconds per image
+    const estimatedMinutesPerImage = 3;
+    const estimatedMinutes = total * estimatedMinutesPerImage;
     
     return (
       <div style={{ marginTop: '20px', marginBottom: '20px' }}>
@@ -115,7 +116,7 @@ export default function Home() {
           color: '#92400e',
           fontSize: '14px'
         }}>
-          Processing {total} images. This will take approximately {Math.ceil(estimatedSeconds / 10) * 10}-{Math.ceil(estimatedSeconds / 10) * 10 + total * 5} seconds due to API rate limits.
+          Processing {total} {total === 1 ? 'image' : 'images'}. This will take approximately {estimatedMinutes}-{estimatedMinutes + total} minutes. Please do not close this page.
         </div>
         
         {/* Progress Bar Container */}
