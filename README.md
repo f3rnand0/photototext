@@ -10,53 +10,7 @@ A web application that extracts text from photos using Azure Computer Vision OCR
 - **Azure OCR**: Uses Azure Computer Vision API for accurate handwriting recognition
 - **Copy & Download**: Copy extracted text to clipboard or download as text file
 
-## Architecture
-
-```
-Frontend (Next.js)  ←→  Backend (FastAPI)  ←→  Azure Computer Vision API
-     (Render)             (Render)
-```
-
-## Project Structure
-
-```
-photototext/
-├── backend/              # FastAPI application
-│   ├── app/
-│   │   ├── main.py      # FastAPI routes
-│   │   ├── ocr_service.py   # Azure OCR integration
-│   │   ├── text_processor.py # Line break cleaning logic
-│   │   ├── config.py    # Configuration
-│   │   └── models.py    # Pydantic models
-│   ├── tests/           # E2E tests
-│   │   ├── test_e2e.py  # Test cases
-│   │   ├── conftest.py  # Test fixtures
-│   │   └── fixtures/    # Test images
-│   ├── requirements.txt
-│   ├── render.yaml      # Render deployment config
-│   └── .env.example     # Environment variables template
-└── frontend/            # Next.js application
-    ├── src/
-    │   ├── app/         # Next.js pages
-    │   ├── components/  # React components
-    │   └── lib/         # API client
-    ├── package.json
-    └── next.config.js
-```
-
-## Line Break Processing Logic
-
-The application intelligently handles line breaks:
-
-**Keeps breaks when:**
-- Line ends with sentence punctuation (`.`, `!`, `?`)
-- Next line starts with uppercase letter
-- Empty lines (intentional paragraph breaks)
-
-**Joins lines when:**
-- Previous line doesn't end with punctuation
-- Next line starts with lowercase letter
-- Indicates text wrapping due to narrow page
+See [ARCHITECTURE.md](ARCHITECTURE.md) for technical details on the system design, data flow, and algorithms.
 
 ## Local Development
 
@@ -146,6 +100,40 @@ Frontend runs at `http://localhost:3000`
 After both are deployed, update backend environment variable:
 - `ALLOWED_ORIGINS`: Your frontend URL (e.g., `https://photototext.onrender.com`)
 
+## Updating on Render
+
+Render auto-deploys when you push changes to the connected Git branch.
+
+### Automatic Deployment
+
+1. Commit and push your changes to GitHub:
+   ```bash
+   git add .
+   git commit -m "Your update message"
+   git push origin main
+   ```
+
+2. Render detects the push and starts a new deploy automatically.
+
+3. Check deployment status:
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click on your service (`photototext-api` or `photototext`)
+   - Watch the **Events** tab for build progress
+   - Wait for status to change to **Live**
+
+### Manual Deploy (if auto-deploy fails)
+
+1. In Render Dashboard, select your service
+2. Click **Manual Deploy** → **Deploy latest commit**
+3. Monitor the build logs for errors
+
+### Rolling Back
+
+If a deploy breaks production:
+1. In Render Dashboard, go to your service
+2. Click **Manual Deploy** → **Deploy a specific commit**
+3. Select the last known good commit hash
+
 ## Environment Variables
 
 ### Backend (.env)
@@ -233,39 +221,6 @@ The E2E tests cover:
 - ✅ Error handling (no files, invalid type, too many files, too large)
 - ✅ Health check endpoint
 - ✅ API info endpoint
-
-## API Endpoints
-
-### POST /extract-text
-
-Extract text from uploaded images.
-
-**Request**: `multipart/form-data`
-- `files`: Array of image files (PNG, JPG, etc.)
-
-**Response**:
-```json
-{
-  "results": [
-    {
-      "filename": "page1.jpg",
-      "text": "Extracted text with proper paragraphs...",
-      "order": 0
-    }
-  ],
-  "combined_text": "All text combined with \\n\\n between images",
-  "success": true,
-  "message": "Successfully processed 1 image(s)"
-}
-```
-
-### GET /health
-
-Health check endpoint.
-
-### GET /
-
-API info endpoint.
 
 ## File Limits
 
